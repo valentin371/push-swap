@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
-	"strings"
 
 	"push-swap/stack"
 )
@@ -21,13 +19,13 @@ func main() {
 	}
 	s := &stack.State{A: nums}
 
-	scanner := bufio.NewScanner(os.Stdin)
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if line == "" {
-			continue
+	for {
+		var instr string
+		_, err := fmt.Scan(&instr)
+		if err != nil {
+			break
 		}
-		if !stack.Apply(s, line) {
+		if !stack.Apply(s, instr) {
 			fmt.Fprintln(os.Stderr, "Error")
 			os.Exit(1)
 		}

@@ -1,11 +1,24 @@
 package sorter
 
 import (
-	"math/rand"
 	"testing"
 
 	"push-swap/stack"
 )
+
+func shuffled(size, seed int) []int {
+	nums := make([]int, size)
+	for i := range nums {
+		nums[i] = i
+	}
+	x := seed
+	for i := size - 1; i > 0; i-- {
+		x = (x*1103515245 + 12345) % 2147483648
+		j := (x / 65536) % (i + 1)
+		nums[i], nums[j] = nums[j], nums[i]
+	}
+	return nums
+}
 
 func check(t *testing.T, nums []int) int {
 	ops := Sort(nums)
@@ -22,6 +35,18 @@ func check(t *testing.T, nums []int) int {
 		t.Fatalf("not sorted for %v: a=%v b=%v", nums, s.A, s.B)
 	}
 	return len(ops)
+}
+
+func equalOps(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func TestFixedCases(t *testing.T) {
@@ -41,10 +66,14 @@ func TestFixedCases(t *testing.T) {
 	}
 }
 
-func TestRandom(t *testing.T) {
-	for n := 0; n <= 50; n++ {
+func TestShuffled(t *testing.T) {
+	for n := 0; n <= 80; n++ {
 		for k := 0; k < 20; k++ {
-			check(t, rand.Perm(n))
+			nums := shuffled(n, n*100+k+1)
+			for i := range nums {
+				nums[i] -= n / 2
+			}
+			check(t, nums)
 		}
 	}
 }
@@ -55,6 +84,34 @@ func TestAlreadySorted(t *testing.T) {
 	}
 }
 
-func TestCounts(t *testing.T) {
-	t.Logf("100 numbers: %d instructions", check(t, rand.Perm(100)))
+func TestSimplify(t *testing.T) {
+	cases := []struct {
+		in   []string
+		want []string
+	}{
+		{[]string{"ra", "rb"}, []string{"rr"}},
+		{[]string{"rb", "ra"}, []string{"rr"}},
+		{[]string{"rrb", "rra"}, []string{"rrr"}},
+		{[]string{"ra", "rra"}, nil},
+		{[]string{"pb", "ra", "pa"}, []string{"pb", "ra", "pa"}},
+	}
+	for _, c := range cases {
+		if got := simplify(c.in); !equalOps(got, c.want) {
+			t.Errorf("simplify(%v) = %v, want %v", c.in, got, c.want)
+		}
+	}
+}
+
+func TestLimits(t *testing.T) {
+	n100 := check(t, shuffled(100, 1))
+	t.Logf("100 numbers: %d instructions", n100)
+	if n100 > 700 {
+		t.Errorf("100 numbers: %d instructions, expected at most 700", n100)
+	}
+
+	n500 := check(t, shuffled(500, 1))
+	t.Logf("500 numbers: %d instructions", n500)
+	if n500 > 5500 {
+		t.Errorf("500 numbers: %d instructions, expected at most 5500", n500)
+	}
 }

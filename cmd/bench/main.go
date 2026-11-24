@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strconv"
 
@@ -20,9 +19,24 @@ func readArg(index int, def int) int {
 	return def
 }
 
+func shuffled(size, seed int) []int {
+	nums := make([]int, size)
+	for i := range nums {
+		nums[i] = i
+	}
+	x := seed
+	for i := size - 1; i > 0; i-- {
+		x = (x*1103515245 + 12345) % 2147483648
+		j := (x / 65536) % (i + 1)
+		nums[i], nums[j] = nums[j], nums[i]
+	}
+	return nums
+}
+
 func main() {
 	size := readArg(1, 100)
 	runs := readArg(2, 10)
+	seed := readArg(3, 1)
 
 	success := 0
 	total := 0
@@ -30,7 +44,7 @@ func main() {
 	highest := 0
 
 	for i := 0; i < runs; i++ {
-		nums := rand.Perm(size)
+		nums := shuffled(size, seed*1000+i+1)
 		ops := sorter.Sort(nums)
 
 		s := &stack.State{A: append([]int{}, nums...)}
